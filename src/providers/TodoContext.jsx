@@ -1,61 +1,49 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useState } from "react";
 import { api } from "../services/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; 
 
 export const TodoContext = createContext({});
 
 export const TodoProvider = ({ children }) => {
-   const [todoList, setTodoList] = useState([]);
+   const { data: todoList } = useQuery({
+      queryKey: ["todos"],
+      queryFn: async () => {
+         const { data } = await api.get("/todo");
+         return data;
+      }
+   });
+  
    const [editingTodo, setEditingTodo] = useState(null);
 
-   useEffect(() => {
-      const getTodos = async () => {
-         try {
-            const { data } = await api.get("/todo");
-            setTodoList(data);
-         } catch (error) {
-            console.log(error);
-         }
-      };
-      getTodos();
-   }, []);
+   const client = useQueryClient();
+   
+   const revalidate = () => {
+      client.invalidateQueries({ queryKey: ["todos"]});
+   }
 
-   const createTodo = async (formData) => {
-      try {
-         const { data } = await api.post("/todo", formData);
-         setTodoList([...todoList, data]);
-      } catch (error) {
-         console.log(error);
-      }
-   };
+   const createTodo = useMutation({
+      mutationFn: async (formData) => {
+         return await api.post("/todo", formData);
+      },
+      onSuccess: revalidate,
+   })
 
-   const deleteTodo = async (deletingId) => {
-      try {
-         await api.delete(`/todo/${deletingId}`);
-         const newTodoList = todoList.filter((todo) => todo.id !== deletingId);
-         setTodoList(newTodoList);
-      } catch (error) {
-         console.log(error);
-      }
-   };
+   const deleteTodo = useMutation({
+      mutationFn: async (deletingId) => {
+         return await api.delete(`/todo/${deletingId}`);
+      },
+      onSuccess: revalidate,
+   })
 
-   const editTodo = async (formData) => {
-      try {
-         const { data } = await api.patch(`/todo/${editingTodo.id}`, formData);
-
-         const newTodoList = todoList.map((todo) => {
-            if (todo.id === editingTodo.id) {
-               return data;
-            } else {
-               return todo;
-            }
-         });
-
-         setTodoList(newTodoList);
+   const editTodo = useMutation({
+      mutationFn: async (formData) => {
+         return await api.patch(`/todo/${editingTodo.id}`, formData);
+      },
+      onSuccess: () => {
          setEditingTodo(null);
-      } catch (error) {
-         console.log(error);
+         revalidate();
       }
-   };
+   })
 
    return (
       <TodoContext.Provider

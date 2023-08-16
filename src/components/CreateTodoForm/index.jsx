@@ -8,7 +8,7 @@ export const CreateTodoForm = () => {
     const { createTodo } = useContext(TodoContext);
 
     const submit = (formData) => {
-        createTodo(formData);
+        createTodo.mutate(formData);
     }
 
     return(

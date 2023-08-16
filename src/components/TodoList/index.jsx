@@ -6,11 +6,11 @@ export const TodoList = () => {
 
    return (
       <ul>
-         {todoList.map((todo) => (
+         {todoList?.map((todo) => (
             <li key={todo.id}>
                <h3>{todo.title}</h3>
                <p>{todo.content}</p>
-               <button onClick={() => deleteTodo(todo.id)}>Excluir</button>
+               <button onClick={() => deleteTodo.mutate(todo.id)}>Excluir</button>
                <button onClick={() => setEditingTodo(todo)}>Editar</button>
             </li>
          ))}

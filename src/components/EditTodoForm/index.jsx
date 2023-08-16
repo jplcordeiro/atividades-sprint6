@@ -14,7 +14,7 @@ export const EditTodoForm = () => {
     
 
     const submit = (formData) => {
-        editTodo(formData);
+        editTodo.mutate(formData);
     }
 
     return(
